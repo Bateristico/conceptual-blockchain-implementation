@@ -1,4 +1,4 @@
-const SHA356 = require('crypto-js/sha256');
+const SHA256 = require('crypto-js/sha256');
 
 // a normal block class
 class Block {
@@ -43,3 +43,13 @@ class BlockChain {
     this.chain.push(newBlock);
   }
 }
+// creating 2 new blocks
+let block1 = new Block(1, new Date(), { mybalance: 100 });
+let block2 = new Block(2, new Date(), { mybalance: 50 });
+// creating a blockchain
+let myBlockChain = new BlockChain();
+// adding 2 blocks to the blockchain
+myBlockChain.addBlock(block1);
+myBlockChain.addBlock(block2);
+
+console.log('blockchain', JSON.stringify(myBlockChain, null, 4));
