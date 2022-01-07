@@ -42,6 +42,23 @@ class BlockChain {
     newBlock.hash = newBlock.calculateHash();
     this.chain.push(newBlock);
   }
+
+  checkBlockChainValid() {
+    for (let i = 1; i < this.chain.length; i++) {
+      const currentBlock = this.chain[i];
+      const previousBlock = this.chain[i - 1];
+
+      if (currentBlock.hash !== currentBlock.calculateHash()) {
+        return false;
+      }
+
+      if (currentBlock.previousHash !== previousBlock.hash) {
+        return false;
+      }
+
+      return true;
+    }
+  }
 }
 // creating 2 new blocks
 let block1 = new Block(1, new Date(), { mybalance: 100 });
@@ -53,3 +70,11 @@ myBlockChain.addBlock(block1);
 myBlockChain.addBlock(block2);
 
 console.log('blockchain', JSON.stringify(myBlockChain, null, 4));
+console.log('validation check of the blockchain: ', myBlockChain.checkBlockChainValid());
+
+// introduce a change of the block
+myBlockChain.chain[1].data = { mybalance: 5000 };
+console.log(
+  'validation check of the blockchain (after hacking): ',
+  myBlockChain.checkBlockChainValid()
+);
