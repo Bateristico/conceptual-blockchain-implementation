@@ -1,11 +1,18 @@
 const SHA256 = require('crypto-js/sha256');
 
+class Transaction {
+  constructor(fromAddress, toAddress, amount) {
+    this.fromAddress = fromAddress;
+    this.toAddress = toAddress;
+    this.amount = amount;
+  }
+}
+
 // a normal block class
 class Block {
-  constructor(index, timestamp, data, previousHash = '') {
-    this.index = index;
+  constructor(timestamp, transactions, previousHash = '') {
     this.timestamp = timestamp;
-    this.data = data;
+    this.transactions = transactions;
     this.previousHash = previousHash;
     this.hash = this.calculateHash();
     this.nonce = 0;
@@ -14,7 +21,7 @@ class Block {
   calculateHash() {
     // generate HASH using SHA256
     return SHA256(
-      this.index + this.timestamp + this.previousHash + JSON.stringify(this.data) + this.nonce
+      this.timestamp + this.previousHash + JSON.stringify(this.transactions) + this.nonce
     ).toString();
   }
 
@@ -33,10 +40,12 @@ class BlockChain {
   constructor() {
     // the first variable of the array will be the genesis block
     this.chain = [this.createGenesisBlock()];
-    this.difficulty = 5;
+    this.difficulty = 2;
+    this.pendingTransactions = [];
+    this.miningReward = 10; // 10 coins reward
   }
   createGenesisBlock() {
-    return new Block(0, new Date(), 'this is the genesis block', '0');
+    return new Block(new Date(), 'this is the genesis block', '0');
   }
 
   getLatestBlock() {
@@ -48,10 +57,32 @@ class BlockChain {
 - the hash of the previous block
 - calculate the hash of current block
 */
-  addBlock(newBlock) {
-    newBlock.previousHash = this.getLatestBlock().hash;
-    newBlock.mineNewBlock(this.difficulty);
-    this.chain.push(newBlock);
+  minePendingTransactions(miningRewardAddress) {
+    let block = new Block(Date.now(), this.pendingTransactions, this.getLatestBlock().hash);
+    block.mineNewBlock(this.difficulty);
+    console.log('Block mined successfully');
+
+    this.chain.push(block);
+    this.pendingTransactions = [new Transaction(null, miningRewardAddress, this.miningReward)];
+  }
+
+  createTransaction(transaction) {
+    this.pendingTransactions.push(transaction);
+  }
+
+  getBalanceOfAddress(address) {
+    let balance = 0;
+    for (const block of this.chain) {
+      for (const trans of block.transactions) {
+        if (trans.fromAddress === address) {
+          balance = balance - trans.amount;
+        }
+        if (trans.toAddress === address) {
+          balance = balance + trans.amount;
+        }
+      }
+    }
+    return balance;
   }
 
   checkBlockChainValid() {
@@ -71,15 +102,36 @@ class BlockChain {
     }
   }
 }
-// creating 2 new blocks
-let block1 = new Block(1, new Date(), { mybalance: 100 });
-let block2 = new Block(2, new Date(), { mybalance: 50 });
-// creating a blockchain
-let myBlockChain = new BlockChain();
-// adding 2 blocks to the blockchain
-console.log('first block creation');
-myBlockChain.addBlock(block1);
-console.log('second block creation');
-myBlockChain.addBlock(block2);
 
-console.log(JSON.stringify(myBlockChain, null, 4));
+let myCoin = new BlockChain();
+
+transaction1 = new Transaction('mirka', 'lonia', 100);
+myCoin.createTransaction(transaction1);
+
+transaction2 = new Transaction('lonia', 'mirka', 20);
+myCoin.createTransaction(transaction2);
+
+console.log('Started mining by the miner...');
+myCoin.minePendingTransactions('laika');
+
+// lets check the balance for each one of them
+console.log(`the balance for Mirka is ${myCoin.getBalanceOfAddress('mirka')}`);
+console.log(`the balance for Lonia is ${myCoin.getBalanceOfAddress('lonia')}`);
+console.log(`the balance for miner Laika is ${myCoin.getBalanceOfAddress('laika')}`);
+
+console.log('Started mining again by the miner...');
+myCoin.minePendingTransactions('laika');
+console.log(`the balance for miner Laika is ${myCoin.getBalanceOfAddress('laika')}`);
+
+// // creating 2 new blocks
+// let block1 = new Block(new Date(), { mybalance: 100 });
+// let block2 = new Block(new Date(), { mybalance: 50 });
+// // creating a blockchain
+// let myBlockChain = new BlockChain();
+// // adding 2 blocks to the blockchain
+// console.log('first block creation');
+// myBlockChain.addBlock(block1);
+// console.log('second block creation');
+// myBlockChain.addBlock(block2);
+
+// console.log(JSON.stringify(myBlockChain, null, 4));
