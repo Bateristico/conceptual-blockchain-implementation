@@ -8,13 +8,23 @@ class Block {
     this.data = data;
     this.previousHash = previousHash;
     this.hash = this.calculateHash();
+    this.nonce = 0;
   }
 
   calculateHash() {
     // generate HASH using SHA256
     return SHA256(
-      this.index + this.timestamp + this.previousHash + JSON.stringify(this.data)
+      this.index + this.timestamp + this.previousHash + JSON.stringify(this.data) + this.nonce
     ).toString();
+  }
+
+  mineNewBlock(difficulty) {
+    while (this.hash.substring(0, difficulty) !== Array(difficulty + 1).join('0')) {
+      //2ff9c985da01874b6d7cb574635ef6dde1249d226d965af803fea09cf66fdfc4
+      this.nonce++;
+      this.hash = this.calculateHash();
+    }
+    console.log('A new block was mined with hash', this.hash);
   }
 }
 
@@ -23,6 +33,7 @@ class BlockChain {
   constructor() {
     // the first variable of the array will be the genesis block
     this.chain = [this.createGenesisBlock()];
+    this.difficulty = 5;
   }
   createGenesisBlock() {
     return new Block(0, new Date(), 'this is the genesis block', '0');
@@ -39,7 +50,7 @@ class BlockChain {
 */
   addBlock(newBlock) {
     newBlock.previousHash = this.getLatestBlock().hash;
-    newBlock.hash = newBlock.calculateHash();
+    newBlock.mineNewBlock(this.difficulty);
     this.chain.push(newBlock);
   }
 
@@ -66,15 +77,9 @@ let block2 = new Block(2, new Date(), { mybalance: 50 });
 // creating a blockchain
 let myBlockChain = new BlockChain();
 // adding 2 blocks to the blockchain
+console.log('first block creation');
 myBlockChain.addBlock(block1);
+console.log('second block creation');
 myBlockChain.addBlock(block2);
 
-console.log('blockchain', JSON.stringify(myBlockChain, null, 4));
-console.log('validation check of the blockchain: ', myBlockChain.checkBlockChainValid());
-
-// introduce a change of the block
-myBlockChain.chain[1].data = { mybalance: 5000 };
-console.log(
-  'validation check of the blockchain (after hacking): ',
-  myBlockChain.checkBlockChainValid()
-);
+console.log(JSON.stringify(myBlockChain, null, 4));
